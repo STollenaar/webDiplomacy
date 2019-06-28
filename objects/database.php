@@ -338,6 +338,28 @@ class Database {
 		return $row;
 	}
 
+		/**
+ 	* Run a SQL query and return all results
+ 	* 
+ 	* @param string $sql the SQL query
+ 	* 
+ 	* @return array|bool All rows in an array, or false if no rows were returned
+ 	*/
+
+	 public function sql_all($sql)
+	 {		 
+		
+		$result = mysqli_query($this->link, $sql);
+		while($row = $result->fetch_assoc())
+		{
+    		$rows[] = $row;
+		}
+
+		 if ( $rows ) mysqli_free_result($result);
+		
+		 return $rows;
+	 }
+
 	/**
 	 * Run a SQL query and return a single named row $row['foo']
 	 *
