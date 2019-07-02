@@ -22,6 +22,7 @@ defined('IN_CODE') or die('This script can not be run by itself.');
 
 require_once(l_r('gamepanel/gameboard.php'));
 require_once(l_r('gamepanel/membershome.php'));
+require_once(l_r('objects/ChromePhp.php'));
 
 /**
  * This class displays the game panel within a home context. Output is trimmed down to size,
@@ -165,16 +166,29 @@ class panelGameHome extends panelGameBoard
 		$userInGame = 0;
 		list($userInGame) = $DB->sql_row("SELECT count(1) FROM wD_Members WHERE userID =".$User->id." and gameID =".$this->id);
 		$watchString= '';	
-
 		if ($this->watched() || $userInGame == 0)
 		{
 			if ($this->watched()) { $watchString = '- <a href="board.php?gameID='.$this->id.'&unwatch">'.l_t('Stop spectating').'</a>'; }
 			if( $this->phase == 'Pre-game')
-			{
+			{			
+				if(isset($this->inviteCode))
+				{
+					$invite = (object)['gameID' => $this->id, 'code' => $this->inviteCode];
+					
+					return '<div class="bar homeGameLinks barAlt'.libHTML::alternate().'">
+						<form action="#" method="post">
+						<input type="hidden" value="'.htmlspecialchars(json_encode($invite)).'" name="gameInvitation" />
+						<input type="submit" title="Accept Invitation" class = "home-submit" name="accept" value="Accept Invitation" />
+						<input type="submit" title="Decline Invitation" class = "home-submit" name="decline" value="Decline Invitation"/>
+						</form>
+						</div>';
+				}else
+				{
 				return '<div class="bar homeGameLinks barAlt'.libHTML::alternate().'">
 					<a href="board.php?gameID='.$this->id.'">'.l_t('Open').'</a>
 					'.$watchString.'
 					</div>';
+				}
 			}
 			else
 			{

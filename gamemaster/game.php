@@ -19,7 +19,6 @@
  */
 
 defined('IN_CODE') or die('This script can not be run by itself.');
-
 require_once(l_r('gamemaster/gamemaster.php'));
 
 require_once(l_r('objects/game.php'));
@@ -286,10 +285,9 @@ class processGame extends Game
 	 *
 	 * @return Game The object corresponding to the new game
 	 */
-	public static function create($variantID, $name, $password, $bet, $potType, $phaseMinutes, $joinPeriod, $anon, $press, $missingPlayerPolicy='Normal', $drawType, $rrLimit, $excusedMissedTurns)
+	public static function create($variantID, $name, $password, $bet, $potType, $phaseMinutes, $joinPeriod, $anon, $press, $missingPlayerPolicy='Normal', $drawType, $rrLimit, $excusedMissedTurns, $invitedPlayers)
 	{
 		global $DB;
-
 		if ( $name == 'DATC-Adjudicator-Test' and ! defined('DATC') )
 		{
 			throw new Exception(l_t("The game name 'DATC-Adjudicator-Test' is reserved for the automated DATC tester."));
@@ -335,6 +333,23 @@ class processGame extends Game
 						excusedMissedTurns = ".$excusedMissedTurns);
 
 		$gameID = $DB->last_inserted();
+
+		//creating the entry for the invited players.
+		if($invitedPlayers != ""){
+			foreach(explode(", ", $invitedPlayers) as $Iname) {
+				list($invitedUserID, $invitedUsername) = $DB->sql_row("SELECT id, username FROM wD_Users WHERE username='".$Iname."'");
+				
+				if(!isset($invitedUserID) || !isset($invitedUsername))
+					throw new Exception(l_t("Unknown user invited"));
+				
+				$inviteCode = md5($invitedUsername."".$password."".$gameID."".$name);
+				$DB->sql_put("INSERT INTO wD_GameInvites SET gameID=".$gameID.",
+							userID=".$invitedUserID.",
+							inviteCode='".$inviteCode."'");
+			};
+		}
+		
+
 
 		$Variant=libVariant::loadFromVariantID($variantID);
 		return $Variant->processGame($gameID);

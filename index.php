@@ -28,6 +28,7 @@ require_once(l_r('lib/message.php'));
 require_once(l_r('objects/game.php'));
 
 require_once(l_r('gamepanel/gamehome.php'));
+require_once('objects/ChromePhp.php');
 
 /*
  * A field
@@ -45,26 +46,61 @@ if( !isset($_SESSION['lastSeenHome']) || $_SESSION['lastSeenHome'] < $User->time
 
 global $DB;
 $gameToggleID = 0;
+$invitation;
 
-if(isset($_POST['submit']))
+if(isset($_POST['submit']) or isset($_POST['gameInvitation']))
 {
 	if(isset($_POST['gameToggleName']))
 	{
 		$gameToggleID = (int)$_POST['gameToggleName'];
 	}
+	if(isset($_POST['gameInvitation'])){
+		$invitation = json_decode($_POST['gameInvitation']);
+	}
+	ChromePhp::log($invitation);
 
-	if ($User->type['User'] and $gameToggleID > 0)
+	if ($User->type['User'])
 	{
-		$noticesStatus = 5;
-		list($noticesStatus) = $DB->sql_row("SELECT hideNotifications FROM wD_Members WHERE userID =".$User->id." and gameID =".$gameToggleID);
+		if(isset($_POST['gameInvitation'])){
+		
+		
+			if(isset($_POST['accept'])){
 
-		if ($noticesStatus == 0)
-		{
-			$DB->sql_put("UPDATE wD_Members SET hideNotifications = 1 WHERE userID =".$User->id." and gameID =".$gameToggleID);
-		}
-		else if ($noticesStatus == 1)
-		{
-			$DB->sql_put("UPDATE wD_Members SET hideNotifications = 0 WHERE userID =".$User->id." and gameID =".$gameToggleID);
+				try{
+					list($code) = $DB->sql_row("SELECT inviteCode FROM wD_GameInvites WHERE gameID=".$invitation->gameID." AND userID=".$User->id);
+					if($code != $invitation->code)
+						throw new Exceptio(l_t("Invitation Code doesn't match the given one"));
+
+					require_once(l_r('gamemaster/game.php'));
+					$Variant=libVariant::loadFromGameID((int)$invitation->gameID);
+					libVariant::setGlobals($Variant);
+					$Game = $Variant->processGame((int)$invitation->gameID);
+					$DB->sql_put("DELETE FROM wD_GameInvites WHERE gameID=".$invitation->gameID." AND userID=".$User->id);
+					// They will be stopped here if they're not allowed.
+					$Game->Members->join(
+						( $Game->password),
+						( isset($_REQUEST['countryID']) ? $_REQUEST['countryID'] : null ) );
+					
+				}catch(Exception $e){
+				// Couldn't join game
+				libHTML::error($e->getMessage());
+				}
+			}
+
+			$DB->sql_put("DELETE FROM wD_GameInvites WHERE gameID=".$invitation->gameID." AND userID=".$User->id);
+
+		}else if($gameToggleID > 0){
+			$noticesStatus = 5;
+			list($noticesStatus) = $DB->sql_row("SELECT hideNotifications FROM wD_Members WHERE userID =".$User->id." and gameID =".$gameToggleID);
+
+			if ($noticesStatus == 0)
+			{
+				$DB->sql_put("UPDATE wD_Members SET hideNotifications = 1 WHERE userID =".$User->id." and gameID =".$gameToggleID);
+			}
+			else if ($noticesStatus == 1)
+			{
+				$DB->sql_put("UPDATE wD_Members SET hideNotifications = 0 WHERE userID =".$User->id." and gameID =".$gameToggleID);
+			}
 		}
 	}
 }
@@ -323,6 +359,35 @@ class libHome
 		}
 		return $buf;
 	}
+	// TODO: add the invite notify block
+	static public function gameInviteBlock()
+	{
+		global $User, $DB;
+		
+		$tabl=$DB->sql_tabl("SELECT g.* , i.inviteCode FROM wD_Games g
+			INNER JOIN wD_GameInvites i ON ( i.userID = ".$User->id." AND i.gameID = g.id )
+			ORDER BY g.processStatus ASC, g.processTime ASC");
+		$buf = '';
+		$count=0;
+		 
+		while($game=$DB->tabl_hash($tabl))
+		{
+			$count++;
+			$Variant=libVariant::loadFromVariantID($game['variantID']);
+			$Game=$Variant->panelGameHome($game);
+			
+			$buf .= $Game->summary();
+		}
+
+		if($count==0)
+		{
+			$buf .= '<div class="hr"></div>';
+			$buf .= '<div class="bottomborder"><p class="notice">'.l_t('You don\'t have any game invites').'<br /></p></div>';
+		}
+
+		return $buf;
+	}
+
 
 	static public function gameNotifyBlock ()
 	{
@@ -745,6 +810,9 @@ else
 	print '<td class="homeSplit"></td>';
 
 	print '<td class="homeGamesStats">';
+	//TODO: add the game invite block
+	print '<div class="homeHeader">'.l_t('Game Invites').'</div>';
+	print libHome::gameInviteBlock();
 	print '<div class="homeHeader">'.l_t('My games').' <a href="gamelistings.php?page=1&gamelistType=My games">'.libHTML::link().'</a></div>';
 	print libHome::gameNotifyBlock();
 	print '<div class="homeHeader">'.l_t('Defeated games').'</div>';

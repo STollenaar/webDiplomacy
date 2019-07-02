@@ -241,7 +241,7 @@ defined('IN_CODE') or die('This script can not be run by itself.');
                 </p>
                 <p>
                     <strong>Invite Players (optional)</strong></br>
-                    <input class="gameCreate" id="InviteTags" name="newGame[invitePlayers]" value="" size="50" disabled="true"/></br>
+                    <input class="gameCreate" id="InviteTags" name="newGame[invitedPlayers]" value="" size="20"/></br>
                 </p>
 
                 <p class="notice">
@@ -355,36 +355,24 @@ defined('IN_CODE') or die('This script can not be run by itself.');
             AND username!='".$User->username."';")));?>;
         availableTags = availableTags.map(a => a.username);
         
-        console.log(`${availableTags}`);
-
         $("#InviteTags").tagit({
             availableTags:availableTags,
             autocomplete: {delay: 0, minLength: 3}
         });
 
+        $.fn.handler = function(event){
+            if( $("#password").val() != "" &&  $("#password").val() == $("#passwordCheck").val()){
+                $("#tagBuilder").prop('disabled', false);
+            }else{
+                $("#tagBuilder").prop('disabled', true);
+            }
+        }
+
         /**
          * enables or disables the input field
-         *  TODO: squash down to a nice small size
          */
-
-        $("#password").on('keyup', function(event){
-            if($(this).val() != "" && $(this).val() == $("#passwordCheck").val()){
-                $("#tagBuilder").prop('disabled', false);
-            }else{
-                $("#tagBuilder").prop('disabled', true);
-            }
-        });
-
-        
-        $("#passwordCheck").on('keyup', function(event){
-            console.log($(this).val(), $("#password").val(),$(this).val() == $("#password").val() );
-            if($(this).val() != "" && $(this).val() == $("#password").val()){
-                $("#tagBuilder").prop('disabled', false);
-            }else{
-                $("#tagBuilder").prop('disabled', true);
-            }
-        });
-
+        $("#password").on('keyup', (event) => $.fn.handler(event));      
+        $("#passwordCheck").on('keyup', (event) => $.fn.handler(event));
 
     });
     </script>

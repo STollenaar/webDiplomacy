@@ -236,6 +236,11 @@ class Game
 	public $excusedMissedTurns;
 
 	/**
+	 * invite code used for inviting someone into the game
+	 */
+	public $inviteCode;
+
+	/**
 	 * @param int/array $gameData The game ID of the game to load, or the array of its database row
 	 * @param string[optional] $lockMode The database locking phase to use; no locking by default
 	 */

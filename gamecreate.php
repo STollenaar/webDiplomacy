@@ -45,7 +45,7 @@ if( isset($_REQUEST['newGame']) and is_array($_REQUEST['newGame']) )
 		$form = $_REQUEST['newGame']; // This makes $form look harmless when it is unsanitized; the parameters must all be sanitized
 
 		$input = array();
-		$required = array('variantID', 'name', 'password', 'passwordcheck','invitePlayers', 'bet', 'potType', 'phaseMinutes', 'joinPeriod', 'anon', 'pressType', 'missingPlayerPolicy','drawType','minimumReliabilityRating','excusedMissedTurns');
+		$required = array('variantID', 'name', 'password', 'passwordcheck','invitedPlayers', 'bet', 'potType', 'phaseMinutes', 'joinPeriod', 'anon', 'pressType', 'missingPlayerPolicy','drawType','minimumReliabilityRating','excusedMissedTurns');
 
 		if ( !isset($form['missingPlayerPolicy']) ) {$form['missingPlayerPolicy'] = 'Normal'; }
 		
@@ -67,6 +67,9 @@ if( isset($_REQUEST['newGame']) and is_array($_REQUEST['newGame']) )
 		if ( $input['password'] != $input['passwordcheck'] )
 		{
 			throw new Exception(l_t("The two invite codes entered don't match."));
+		}
+		if( $input['password'] == "" && $input['invitedPlayers'] != ""){
+			$input['invitedPlayers'] = "";
 		}
 
 		$input['bet'] = (int) $input['bet'];
@@ -171,7 +174,8 @@ if( isset($_REQUEST['newGame']) and is_array($_REQUEST['newGame']) )
 			$input['missingPlayerPolicy'],
 			$input['drawType'],
 			$input['minimumReliabilityRating'],
-			$input['excusedMissedTurns']);
+			$input['excusedMissedTurns'],
+			$input['invitedPlayers']);
 
 		// Prevent temp banned players from making new games.
 		if ($User->userIsTempBanned())
