@@ -176,7 +176,7 @@ class panelGameHome extends panelGameBoard
 					$invite = (object)['gameID' => $this->id, 'code' => $this->inviteCode];
 					
 					return '<div class="bar homeGameLinks barAlt'.libHTML::alternate().'">
-						<form action="#" method="post">
+						<form name="gameInvite" action="#" method="post">
 						<input type="hidden" value="'.htmlspecialchars(json_encode($invite)).'" name="gameInvitation" />
 						<input type="submit" title="Accept Invitation" class = "home-submit" name="accept" value="Accept Invitation" />
 						<input type="submit" title="Decline Invitation" class = "home-submit" name="decline" value="Decline Invitation"/>

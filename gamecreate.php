@@ -193,6 +193,7 @@ if( isset($_REQUEST['newGame']) and is_array($_REQUEST['newGame']) )
 		print '<div class="content">';
 		print '<p class="notice">'.$e->getMessage().'</p>';
 		print '</div>';
+
 	}
 }
 
